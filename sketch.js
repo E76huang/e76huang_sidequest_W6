@@ -85,6 +85,13 @@ let pendingDeath = false;
 let deathStarted = false;
 let deathFrameTimer = 0;
 
+let hurtSound;
+let attackSound;
+
+let shakeTimer = 0;
+const SHAKE_FRAMES = 15;
+const SHAKE_AMOUNT = 10;
+
 // --- TILE MAP ---
 /*
   Tile key:
@@ -208,7 +215,14 @@ function preload() {
   wallLImg = loadImage("assets/wallL.png");
   wallRImg = loadImage("assets/wallR.png");
 
-  fontImg = loadImage("assets/bitmapFont.png");
+fontImg = loadImage("assets/bitmapFont.png");
+  
+hurtSound = loadSound("assets/hurt.mp3");
+jumpSound = loadSound("assets/jump.mp3");
+landSound = loadSound("assets/land.mp3");
+collectSound = loadSound("assets/collect.mp3"); 
+attackSound = loadSound("assets/attack.mp3");
+
 }
 
 function setup() {
@@ -262,8 +276,22 @@ function draw() {
   camera.x = Math.round(lerp(camera.x || targetX, targetX, 0.1));
   camera.y = Math.round(lerp(camera.y || targetY, targetY, 0.1));
 
+  // add these lines right after:
+if (shakeTimer > 0) {
+  camera.x += random(-SHAKE_AMOUNT, SHAKE_AMOUNT);
+  camera.y += random(-SHAKE_AMOUNT, SHAKE_AMOUNT);
+  shakeTimer--;
+}
+
   // --- PLAYER GROUNDED CHECK ---
   const grounded = isPlayerGrounded();
+
+  // add these lines right after:
+
+if (grounded && !wasGrounded && player.vel.y > 0.5) {
+  landSound.play();
+}
+wasGrounded = grounded;
 
   // --- PLAYER INPUT (disabled during knockback / death) ---
   // ATTACK
@@ -280,6 +308,8 @@ function draw() {
   // JUMP
   if (!dead && !won && knockTimer === 0 && !pendingDeath && grounded && kb.presses("up")) {
     player.vel.y = -1 * PLAYER_JUMP;
+    jumpSound.play(); // add this
+
   }
 
   // --- PLAYER STATE / ANIMATION ---
@@ -515,6 +545,8 @@ function rescueLeaf(player, leaf) {
   leaf.visible = false;
   leaf.removeColliders();
   score++;
+  collectSound.play(); // add this
+
 
   // win condition
   if (score >= WIN_SCORE) {
@@ -530,6 +562,8 @@ function takeDamageFromFire(player, fire) {
   if (invulnTimer > 0 || dead) return;
 
   health = max(0, health - 1);
+  hurtSound.play(); 
+  shakeTimer = SHAKE_FRAMES;
   if (health <= 0) pendingDeath = true;
 
   invulnTimer = INVULN_FRAMES;
@@ -549,6 +583,8 @@ function playerHitByBoar(player, e) {
   if (invulnTimer > 0 || dead) return;
 
   health = max(0, health - 1);
+  hurtSound.play(); // <-- add this
+  shakeTimer = SHAKE_FRAMES;
   if (health <= 0) pendingDeath = true;
 
   invulnTimer = INVULN_FRAMES;

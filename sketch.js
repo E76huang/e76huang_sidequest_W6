@@ -303,6 +303,7 @@ wasGrounded = grounded;
     player.ani.frame = 0;
     player.ani = "attack";
     player.ani.play();
+    attackSound.play(); // add this
   }
 
   // JUMP
